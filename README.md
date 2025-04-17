@@ -4,3 +4,5 @@ This is the text based Bus reservation system. Using Thread and sockets via clie
 Files to be present in the same directory: users.txt, bookings.txt, trips.txt,buses.txt and drivers.txt
 
 Run the server in one terminal and the client in the other terminal.
+CAUTION: REMEMBER TO GIVE INPUTS THAT FOLLOW THE GIVEN CONDITIONS OF INPUT
+
