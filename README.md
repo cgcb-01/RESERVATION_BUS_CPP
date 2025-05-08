@@ -63,20 +63,20 @@ Bus Reservation System
 # Data Files
 The system maintains several CSV files for data persistence:
 
-users.txt - Stores user information (Aadhar, name, age, password)
+```users.txt``` - Stores user information (Aadhar, name, age, password)
 
-drivers.txt - Stores driver information (Aadhar, license, name, age, password)
+```drivers.txt``` - Stores driver information (Aadhar, license, name, age, password)
 
-buses.txt - Stores bus information (Bus number, driver Aadhar, rows, cols)
+```buses.txt```- Stores bus information (Bus number, driver Aadhar, rows, cols)
 
-trips.txt - Stores trip information (Trip ID, bus number, source, destination, time, driver)
+```trips.txt``` - Stores trip information (Trip ID, bus number, source, destination, time, driver)
 
-bookings.txt - Stores booking information (Trip ID, bus number, seat, user Aadhar, name, price)
+```bookings.txt``` - Stores booking information (Trip ID, bus number, seat, user Aadhar, name, price)
 
-seat{TRIP_ID}.txt - Per-trip seat availability files
+```seat{TRIP_ID}.txt``` - Per-trip seat availability files
 
-Installation & Setup
-# Prerequisites
+# Installation & Setup
+## Prerequisites
 Linux environment
 
 GCC/G++ compiler
@@ -88,7 +88,7 @@ Basic build tools (make)
 ```
 g++ -std=c++11 -pthread server.cpp -o server
 ```
-Execution
+# Execution
 ```
 ./server
 ```
@@ -109,9 +109,9 @@ Create necessary data files if they don't exist
 # Client Interaction
 Clients can connect to the server using the broadcasted port information. The server provides an interactive menu system for all operations.
 
-### Code Structure
+# Code Structure
 ## Main Components
-# File Operations
+### File Operations
 
 readFile() - Reads CSV files into 2D string vectors
 
@@ -119,19 +119,19 @@ writeFile() - Appends data to CSV files
 
 updateFile() - Overwrites entire CSV files
 
-# User Management
+### User Management
 
 Registration with Aadhar validation
 
 Login authentication
 
-# Driver Management
+### Driver Management
 
 Registration with license validation
 
 Login authentication
 
-# Bus & Trip Management
+### Bus & Trip Management
 
 Bus registration with seat configuration
 
@@ -139,7 +139,7 @@ Trip scheduling with time conflict checking
 
 Automatic seat file generation
 
-# Reservation System
+### Reservation System
 
 Interactive seat maps
 
@@ -147,7 +147,7 @@ Seat locking mechanism
 
 Dynamic pricing based on booking time
 
-# Network Communication
+### Network Communication
 
 TCP server for client connections
 
