@@ -191,17 +191,17 @@ void sendMessage(int sock, const string &message)
 
 string receiveInput(int sock)
 {
-    // Set TCP to immediate mode (disable Nagle)
     int flag = 1;
     setsockopt(sock, IPPROTO_TCP, TCP_NODELAY, &flag, sizeof(flag));
 
     char buffer[8192];
     string input;
+    int blankInputCount = 0;
 
     while (true) {
         memset(buffer, 0, sizeof(buffer));
 
-        // Clear any unread garbage from the socket buffer
+        // Clear any unread junk in socket buffer
         fd_set set;
         struct timeval timeout = {0, 1000}; // 1ms
         FD_ZERO(&set);
@@ -210,7 +210,6 @@ string receiveInput(int sock)
             recv(sock, buffer, sizeof(buffer) - 1, MSG_DONTWAIT);
         }
 
-        // Now receive the actual message
         int bytesReceived = recv(sock, buffer, sizeof(buffer) - 1, 0);
 
         if (bytesReceived == 0) {
@@ -220,7 +219,7 @@ string receiveInput(int sock)
         }
         else if (bytesReceived < 0) {
             if (errno == EAGAIN || errno == EWOULDBLOCK) {
-                usleep(10000); // Try again in 10ms
+                usleep(10000);
                 continue;
             }
             perror("[RECV] Error receiving data");
@@ -233,14 +232,21 @@ string receiveInput(int sock)
         // Trim whitespace
         size_t start = input.find_first_not_of(" \t\r\n");
         if (start == string::npos) {
-            sendPrompt(sock, "⚠️  Empty input. Please enter again:\n> ");
-            continue;
+            blankInputCount++;
+            if (blankInputCount >= 2) {
+                // Allow 2nd blank input to break sync (consume junk)
+                cout << "[RECV] ⚠️  Second blank input detected. Consuming it to resync...\n";
+                blankInputCount = 0;
+                continue; // skip this input
+            } else {
+                sendPrompt(sock, "⚠️  Empty input. Please enter again:\nPROMPT@> ");
+                continue;
+            }
         }
 
         size_t end = input.find_last_not_of(" \t\r\n");
         input = input.substr(start, end - start + 1);
 
-        // Handle Ctrl+C disconnect signal
         if (input == "A client got disconnected") {
             cout << "⚠️  Client disconnected using Ctrl+C.\n";
             close(sock);
@@ -251,7 +257,6 @@ string receiveInput(int sock)
         return input;
     }
 }
-
 
 
 // Ignoring Case 
@@ -575,52 +580,52 @@ void bus_trip_handler::createSeatFile(const string &tripId, int rows, int cols, 
 //------------USER REGISTER--------------------------
 void User::registerUser(int sock)
 {
-    sendPrompt(sock, "Enter your Name:");
+    sendPrompt(sock, "Enter your Name:PROMPT@");
     string name = receiveInput(sock);
 
     int age = 0;
     while (true)
     {
-        sendPrompt(sock, "Enter your Age:");
+        sendPrompt(sock, "Enter your Age:PROMPT@");
         string ageinput = receiveInput(sock);
         try
         {
             age = stoi(ageinput);
             if (age < 1)
-                sendPrompt(sock, "Children below 1 year of age are not eligible for safety concerns.\n");
+                sendMessage(sock, "Children below 1 year of age are not eligible for safety concerns.\n");
             else if (age > 150)
-                sendPrompt(sock, "❌ Enter realistic age data.\n");
+                sendMessage(sock, "❌ Enter realistic age data.\n");
             else
                 break;
         }
         catch (invalid_argument &e)
         {
-            sendPrompt(sock, "❌ Invalid input. Please enter a number for age.\n");
+            sendMessage(sock, "❌ Invalid input. Please enter a number for age.\n");
         }
     }
 
     string aadhar;
     while (true)
     {
-        sendPrompt(sock, "Enter your Unique Aadhar number:");
+        sendPrompt(sock, "Enter your Unique Aadhar number:PROMPT@");
         aadhar = receiveInput(sock);
         if (!isValidAadhar(aadhar))
         {
-            sendPrompt(sock, "❌ Invalid Aadhar number. It must be 12 digits.\n");
+            sendMessage(sock, "❌ Invalid Aadhar number. It must be 12 digits.\n");
             continue;
         }
         if (isAadharExist(aadhar))
         {
-            sendPrompt(sock, "This Aadhar number is already registered.\nIs it a Typo error? (y/n): ");
+            sendPrompt(sock, "This Aadhar number is already registered.\nIs it a Typo error? (y/n): PROMPT@");
             string ans = receiveInput(sock);
             if (ans == "y" || ans == "Y")
             {
-                sendPrompt(sock, "No worries, Re-enter again.\n");
+                sendMessage(sock, "No worries, Re-enter again.\n");
                 continue;
             }
             else
             {
-                sendPrompt(sock, "You're already registered. Please login instead.\n");
+                sendMessage(sock, "You're already registered. Please login instead.\n");
                 return;
             }
         }
@@ -630,21 +635,21 @@ void User::registerUser(int sock)
         }
     }
 
-    sendPrompt(sock, "Enter a Strong Password:");
+    sendPrompt(sock, "Enter a Strong Password:PROMPT@");
     string password = receiveInput(sock);
 
     mtx.lock();
     writeFile(USER_FILE, {aadhar, name, to_string(age), password});
     mtx.unlock();
-    sendPrompt(sock, "✅ Registration Successful!\n");
+    sendMessage(sock, "✅ Registration Successful!\n");
 } // d
 
 //----------USER LOGIN----------------
 string User::login(int sock)
 {
-    sendPrompt(sock, "Enter Your Aadhar Number:");
+    sendPrompt(sock, "Enter Your Aadhar Number:PROMPT@");
     string aadhar = receiveInput(sock);
-    sendPrompt(sock, "Enter Your Password:");
+    sendPrompt(sock, "Enter Your Password:PROMPT@");
     string password = receiveInput(sock);
 
     auto users = readFile(USER_FILE);
@@ -654,12 +659,12 @@ string User::login(int sock)
             continue;
         if (row[0] == aadhar && row[3] == password)
         {
-            sendPrompt(sock, "✅ Login Successful!\n");
+            sendMessage(sock, "✅ Login Successful!\n");
             return aadhar;
         }
     }
 
-    sendPrompt(sock, "❌ Invalid Aadhar number or Password.\n");
+    sendMessage(sock, "❌ Invalid Aadhar number or Password.\n");
     return "";
 } // d
 
@@ -669,26 +674,26 @@ void Driver::registerDriver(int sock)
 {
 
     // Asking for name
-    sendPrompt(sock, "Enter your Name:");
+    sendPrompt(sock, "Enter your Name:PROMPT@");
     string name = receiveInput(sock);
 
     // asking for age
     int age = 0;
     while (true)
     {
-        sendPrompt(sock, "Enter your Age:");
+        sendPrompt(sock, "Enter your Age:PROMPT@");
         string ageinput = receiveInput(sock);
         try
         {
             age = stoi(ageinput);
             if (age < 25 || age > 60)
-                sendPrompt(sock, "Not Eligible to register here as a driver.\n");
+                sendMessage(sock, "Not Eligible to register here as a driver.\n");
             else
                 break;
         }
         catch (invalid_argument &e)
         {
-            sendPrompt(sock, "❌ Invalid input. Please enter a number for age.\n");
+            sendMessage(sock, "❌ Invalid input. Please enter a number for age.\n");
         }
     }
 
@@ -696,25 +701,25 @@ void Driver::registerDriver(int sock)
     string aadhar;
     while (true)
     {
-        sendPrompt(sock, "Enter your Unique Aadhar number:");
+        sendPrompt(sock, "Enter your Unique Aadhar number:PROMPT@");
         aadhar = receiveInput(sock);
         if (!isValidAadhar(aadhar))
         {
-            sendPrompt(sock, "❌ Invalid Aadhar number. It must be 12 digits.\n");
+            sendMessage(sock, "❌ Invalid Aadhar number. It must be 12 digits.\n");
             continue;
         }
         if (isAadharExist(aadhar))
         {
-            sendPrompt(sock, "This Aadhar number is already registered.\nIs it a Typo error? (y/n): ");
+            sendPrompt(sock, "This Aadhar number is already registered.\nIs it a Typo error? (y/n): PROMPT@");
             string ans = receiveInput(sock);
             if (ans == "y" || ans == "Y")
             {
-                sendPrompt(sock, "No worries, Re-enter again.\n");
+                sendMessage(sock, "No worries, Re-enter again.\n");
                 continue;
             }
             else
             {
-                sendPrompt(sock, "You're already registered. Please login instead.\n");
+                sendMessage(sock, "You're already registered. Please login instead.\n");
                 return;
             }
         }
@@ -728,25 +733,25 @@ void Driver::registerDriver(int sock)
     string license;
     while (true)
     {
-        sendPrompt(sock, "Enter your Unique License number:");
+        sendPrompt(sock, "Enter your Unique License number:PROMPT@");
         license = receiveInput(sock);
         if (!isValidLicense(license))
         {
-            sendPrompt(sock, "❌ Invalid License number.\n");
+            sendMessage(sock, "❌ Invalid License number.\n");
             continue;
         }
         if (isLicenseExist(license))
         {
-            sendPrompt(sock, "This License number is already registered.\nIs it a Typo error? (y/n): ");
+            sendPrompt(sock, "This License number is already registered.\nIs it a Typo error? (y/n): PROMPT@");
             string ans = receiveInput(sock);
             if (ans == "y" || ans == "Y")
             {
-                sendPrompt(sock, "No worries, Re-enter again.\n");
+                sendMessage(sock, "No worries, Re-enter again.\n");
                 continue;
             }
             else
             {
-                sendPrompt(sock, "You're already registered. Please login instead.\n");
+                sendMessage(sock, "You're already registered. Please login instead.\n");
                 return;
             }
         }
@@ -756,13 +761,13 @@ void Driver::registerDriver(int sock)
         }
     }
 
-    sendPrompt(sock, "Enter a Strong Password:");
+    sendPrompt(sock, "Enter a Strong Password:PROMPT@");
     string password = receiveInput(sock);
 
     mtx.lock();
     writeFile(DRIVER_FILE, {aadhar, license, name, to_string(age), password});
     mtx.unlock();
-    sendPrompt(sock, "✅ Registration Successful!\n");
+    sendMessage(sock, "✅ Registration Successful!\n");
 } // d
 
 //--------------LOGIN DRIVER-----------------
@@ -776,10 +781,10 @@ string trim(const string &s)
 }
 string Driver::loginDriver(int sock)
 {
-    sendPrompt(sock, "Enter Your Aadhar Number:");
+    sendPrompt(sock, "Enter Your Aadhar Number:PROMPT@");
     string aadhar = trim(receiveInput(sock));
 
-    sendPrompt(sock, "Enter Your Password:");
+    sendPrompt(sock, "Enter Your Password:PROMPT@");
     string password = trim(receiveInput(sock));
 
     auto users = readFile(DRIVER_FILE);
@@ -794,12 +799,12 @@ string Driver::loginDriver(int sock)
 
         if (storedAadhar == aadhar && storedPassword == password)
         {
-            sendPrompt(sock, "✅ Login Successful!\n");
+            sendMessage(sock, "✅ Login Successful!\n");
             return storedAadhar;
         }
     }
 
-    sendPrompt(sock, "❌ Invalid Aadhar number or Password.\n");
+    sendMessage(sock, "❌ Invalid Aadhar number or Password.\n");
     return "";
 }
 
@@ -876,22 +881,22 @@ bool validateAndCompareDate(const string &departDate, time_t &timestamp, const s
 //-----------INSERT TRIPS----------------
 void bus_trip_handler::insertTrip(int sock)
 {
-    sendMessage(sock, "Enter Bus Number: ");
+    sendPrompt(sock, "Enter Bus Number: PROMPT@");
     string busNo = receiveInput(sock);
 
-    sendMessage(sock, "Enter Source: ");
+    sendPrompt(sock, "Enter Source: PROMPT@");
     string source = receiveInput(sock);
 
-    sendMessage(sock, "Enter Destination: ");
+    sendPrompt(sock, "Enter Destination: PROMPT@");
     string destination = receiveInput(sock);
 
-    sendMessage(sock, "Enter Departure Date (DD/MM/YYYY): ");
+    sendPrompt(sock, "Enter Departure Date (DD/MM/YYYY): PROMPT@");
     string departDate = receiveInput(sock);
 
-    sendMessage(sock, "Enter Start Time (HH:MM): ");
+    sendPrompt(sock, "Enter Start Time (HH:MM): PROMPT@");
     string startTime = receiveInput(sock);
 
-    sendMessage(sock,"Enter the Total Distance being covered in KM:");
+    sendPrompt(sock,"Enter the Total Distance being covered in KM:PROMPT@");
     string distance = receiveInput(sock);
     float dist;
     try
@@ -951,7 +956,7 @@ void bus_trip_handler::insertTrip(int sock)
 //-----------Register a bus-------------
 void bus_trip_handler::registerBus(int sock)
 {
-    sendPrompt(sock, "Enter Bus Number (unique ID): ");
+    sendPrompt(sock, "Enter Bus Number (unique ID): PROMPT@");
     string busNo = receiveInput(sock);
 
     // Check if busNo already exists
@@ -966,11 +971,11 @@ void bus_trip_handler::registerBus(int sock)
     }
 
     // Get rows
-    sendPrompt(sock, "Enter number of seat rows: ");
+    sendPrompt(sock, "Enter number of seat rows: PROMPT@");
     string rowStr = receiveInput(sock);
 
     // Get columns
-    sendPrompt(sock, "Enter number of seat columns: ");
+    sendPrompt(sock, "Enter number of seat columns: PROMPT@");
     string colStr = receiveInput(sock);
 
     // Validate inputs
@@ -1137,7 +1142,7 @@ vector<vector<string>> ReservationHandler::viewTrips(int sock)
 
     if (upcomingTrips.empty())
     {
-        sendPrompt(sock, "❌ No upcoming trips are available.\n");
+        sendMessage(sock, "❌ No upcoming trips are available.\n");
     }
 
     return upcomingTrips;
@@ -1161,16 +1166,11 @@ bool validate(string aadhar, string name)
 }
 
 void ReservationHandler::reserve(int sock) {
-    auto trimInput = [](const string& input) {
-        string trimmed = trim(input);
-        if (trimmed.empty()) throw invalid_argument("Blank input not allowed");
-        return trimmed;
-    };
 
     while (true) {
         vector<vector<string>> available = viewTrips(sock);
         if (available.empty()) {
-            sendPrompt(sock, "No upcoming buses available\n");
+            sendMessage(sock, "No upcoming buses available\n");
             return;
         }
 
@@ -1202,8 +1202,8 @@ void ReservationHandler::reserve(int sock) {
         
         while (true) {
             try {
-                sendPrompt(sock, "\nEnter Trip ID (r to refresh trips /e to exit from here): ");
-                string input = trimInput(receiveInput(sock));
+                sendPrompt(sock, "\nEnter Trip ID (r to refresh trips /e to exit from here): PROMPT@");
+                string input = receiveInput(sock);
 
                 if (input == "e") {
                     sendMessage(sock, "Exiting...\n");
@@ -1263,8 +1263,8 @@ void ReservationHandler::reserve(int sock) {
             seatMatrix(currentTripId, rows, cols, sock);
 
             try {
-                sendPrompt(sock, "\nChoose seat (c to change trip /e to exit /seat#): ");
-                string seatChoice = trimInput(receiveInput(sock));
+                sendPrompt(sock, "\nChoose seat (c to change trip /e to exit /seat#): PROMPT@");
+                string seatChoice = receiveInput(sock);
 
                 if (seatChoice == "c") { returnToTrips = true; break; }
                 if (seatChoice == "e") return;
@@ -1292,25 +1292,11 @@ void ReservationHandler::reserve(int sock) {
                 string name, aadhar;
               while(true)
               {
-                while (true) {
-                    try {
-                        sendPrompt(sock, "Passenger Name:");
-                        name = trimInput(receiveInput(sock));                     
-                        break;
-                    } catch (...) {
-                        sendPrompt(sock, "❌ Name required!\n");
-                    }
-                }
+                        sendPrompt(sock, "Passenger Name:PROMPT@");
+                        name = receiveInput(sock);                     
               
-                while (true) {
-                    try {
-                        sendPrompt(sock, "Aadhar Number:");
-                        aadhar = trimInput(receiveInput(sock));
-                        break;
-                    } catch (...) {
-                        sendPrompt(sock, "❌ Aadhar required!\n");
-                    }
-                }
+                        sendPrompt(sock, "Aadhar Number:PROMPT@");
+                        aadhar = receiveInput(sock);
                 bool registered=validate(aadhar,name);
                 if(registered)break;
                 else
@@ -1329,10 +1315,10 @@ void ReservationHandler::reserve(int sock) {
                 // Confirmation
                 string confirm;
                 while (true) {
-                    sendPrompt(sock, priceMsg.str() + "\nConfirm (y/n): ");
-                    confirm = trim(receiveInput(sock));
+                    sendPrompt(sock, priceMsg.str() + "\nConfirm (y/n): PROMPT@");
+                    confirm = receiveInput(sock);
                     if (confirm == "y" || confirm == "n") break;
-                    sendPrompt(sock, "❌ Invalid choice!\n");
+                    sendMessage(sock, "❌ Invalid choice!\n");
                 }
 
                 if (confirm == "y") {
@@ -1352,8 +1338,8 @@ void ReservationHandler::reserve(int sock) {
                         // Post-booking action
                         string another;
                         while (true) {
-                            sendPrompt(sock, "Book another seat? (y/n): ");
-                            another = trim(receiveInput(sock));
+                            sendPrompt(sock, "Book another seat? (y/n): PROMPT@");
+                            another = receiveInput(sock);
                             if (another == "y" || another == "n") break;
                             sendMessage(sock, "❌ Invalid input!\n");
                         }
@@ -1381,7 +1367,7 @@ void driver_client(int sock)
     Driver driver;
     while (true)
     {
-        sendPrompt(sock, "\n---------- MAIN MENU ----------\n1. Register\n2. Login\n3. Exit\nChoose: ");
+        sendPrompt(sock, "\n---------- MAIN MENU ----------\n1. Register\n2. Login\n3. Exit\nChoose: PROMPT@");
         string choice = receiveInput(sock);
 
         if (choice == "3")
@@ -1390,7 +1376,7 @@ void driver_client(int sock)
         if (choice == "1")
         {
             driver.registerDriver(sock);
-            sendPrompt(sock, "Please login to continue...\n");
+            sendMessage(sock, "Please login to continue...\n");
         }
 
         string uid = driver.loginDriver(sock);
@@ -1400,7 +1386,7 @@ void driver_client(int sock)
         bus_trip_handler handlerbus(uid);
         while (true)
         {
-            sendPrompt(sock, "\n---------- DASHBOARD ----------\n1. Register a bus \n2. Insert a trip\n3. Logout\nChoose: ");
+            sendPrompt(sock, "\n---------- DASHBOARD ----------\n1. Register a bus \n2. Insert a trip\n3. Logout\nChoose: PROMPT@");
             string action = receiveInput(sock);
             if (action == "1")
                 handlerbus.registerBus(sock);
@@ -1416,15 +1402,15 @@ void driver_client(int sock)
 //----------USER CLIENT----------------
 void handle_client(int sock)
 {
-    sendPrompt(sock, "🚍 Welcome to the Bus Reservation System 🚍\n");
-    sendPrompt(sock, "\n--------------Mention Your Requirements:---------------\n1(& default).USER\n2.DRIVER\n Enter Your Choice:");
+    sendMessage(sock, "🚍 Welcome to the Bus Reservation System 🚍\n");
+    sendPrompt(sock, "\n--------------Mention Your Requirements:---------------\n1(& default).USER\n2.DRIVER\n Enter Your Choice:PROMPT@");
     string c = receiveInput(sock);
     if (c == "2")
         driver_client(sock);
     User user;
     while (true)
     {
-        sendPrompt(sock, "\n---------- MAIN MENU ----------\n1. Register\n2. Login\n3. Exit\nChoose: ");
+        sendPrompt(sock, "\n---------- MAIN MENU ----------\n1. Register\n2. Login\n3. Exit\nChoose: PROMPT@");
         string choice = receiveInput(sock);
 
         if (choice == "3")
@@ -1433,7 +1419,7 @@ void handle_client(int sock)
         if (choice == "1")
         {
             user.registerUser(sock);
-            sendPrompt(sock, "Please login to continue...\n");
+            sendMessage(sock, "Please login to continue...\n");
         }
 
         string uid = user.login(sock);
@@ -1443,7 +1429,7 @@ void handle_client(int sock)
         ReservationHandler handler(uid);
         while (true)
         {
-            sendMessage(sock, "\n---------- DASHBOARD ----------\n1. View Ticket\n2. Reserve Ticket\n3. Logout\nChoose: ");
+            sendPrompt(sock, "\n---------- DASHBOARD ----------\n1. View Ticket\n2. Reserve Ticket\n3. Logout\nChoose: PROMPT@");
             string action = receiveInput(sock);
             if (action == "1")
                 handler.viewTickets(sock);
@@ -1453,7 +1439,7 @@ void handle_client(int sock)
                 break;
             else
             {
-                sendPrompt(sock, "Oops! you mistyped. Try again");
+                sendMessage(sock, "Oops! you mistyped. Try again");
                 continue;
             }
         }
