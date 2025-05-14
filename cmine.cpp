@@ -43,38 +43,45 @@ int main() {
 
     char buffer[8192];
 
-    while (true) {
-        memset(buffer, 0, sizeof(buffer));
+while (true) {
+    memset(buffer, 0, sizeof(buffer));
 
-        // Receive message from server
-        int bytesReceived = recv(sock, buffer, sizeof(buffer) - 1, 0);
-        if (bytesReceived <= 0) {
-            cout << "🔌 Server disconnected.\n";
+    // Receive message from server
+    int bytesReceived = recv(sock, buffer, sizeof(buffer) - 1, 0);
+    if (bytesReceived <= 0) {
+        cout << "🔌 Server disconnected.\n";
+        break;
+    }
+
+    buffer[bytesReceived] = '\0';
+    string message(buffer);
+
+    // ✅ Always print the server message
+    cout << message;
+
+    // ✅ Check for the explicit prompt marker
+    if (message.rfind("PROMPT@") != string::npos &&
+        message.length() >= 7 &&
+        message.substr(message.length() - 7) == "PROMPT@") {
+        
+        string input;
+        cout << "> ";
+        getline(cin, input);
+
+        // Prevent empty string (send space instead)
+        if (input.empty()) {
+            input = " ";
+        }
+
+        input += '\n';
+
+        if (send(sock, input.c_str(), input.length(), 0) == -1) {
+            cerr << "❌ Failed to send input\n";
             break;
         }
-
-        buffer[bytesReceived] = '\0';
-        cout << buffer;
-
-        // Prompt detection: match server prompts expecting input
-        if (strstr(buffer, "Choose:") || strstr(buffer, "Enter") || strstr(buffer, "Choice:") || strstr(buffer, "Input:") || strstr(buffer, ":")) {
-            string input;
-            cout << "> ";
-            getline(cin, input);
-
-            // Safety: never send an empty string (send space instead)
-            if (input.empty()) {
-                input = " ";
-            }
-
-            input += '\n'; // Ensure newline is sent
-
-            if (send(sock, input.c_str(), input.length(), 0) == -1) {
-                cerr << "❌ Failed to send input\n";
-                break;
-            }
-        }
     }
+}
+
 
     close(sock);
     return 0;
