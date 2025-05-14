@@ -60,29 +60,42 @@ while (true) {
     cout << message;
 
     // ✅ Check for the explicit prompt marker
-    if (message.rfind("PROMPT@") != string::npos &&
-        message.length() >= 7 &&
-        message.substr(message.length() - 7) == "PROMPT@") {
-        
-        string input;
+   if (message.rfind("PROMPT@") != string::npos &&
+    message.length() >= 7 &&
+    message.substr(message.length() - 7) == "PROMPT@") {
+
+    string input;
+    int blankCount = 0;
+
+    while (true) {
         cout << "> ";
         getline(cin, input);
 
-        // Prevent empty string (send space instead)
-        if (input.empty()) {
-            input = " ";
-        }
-
-        input += '\n';
-
-        if (send(sock, input.c_str(), input.length(), 0) == -1) {
-            cerr << "❌ Failed to send input\n";
-            break;
+        // Trim the input
+        size_t start = input.find_first_not_of(" \t\r\n");
+        if (start == string::npos) {
+            blankCount++;
+            if (blankCount == 1) {
+                cout << "⚠️  Empty input. Please enter again:\n";
+                continue; // prompt again
+            } else {
+                // Send a space to keep sync and inform server it's junk
+                input = " ";
+                break;
+            }
+        } else {
+            break; // valid input
         }
     }
+
+    input += '\n';
+
+    if (send(sock, input.c_str(), input.length(), 0) == -1) {
+        cerr << "❌ Failed to send input\n";
+        break;
+        }
+     }
 }
-
-
     close(sock);
     return 0;
 }
