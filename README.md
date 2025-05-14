@@ -16,26 +16,28 @@ Real-time seat availability visualization
 
 UDP broadcasting for server discovery
 
+---
+
 # Features
-User Features
-Registration & Login: Secure user registration with Aadhar validation
+### User Features
+- ```Registration & Login```: Secure user registration with Aadhar validation
 
-Trip Viewing: View all upcoming trips with real-time availability
+- ```Trip Viewing```: View all upcoming trips with real-time availability
 
-Seat Reservation: Interactive seat map with visual indicators
+- ```Seat Reservation```: Interactive seat map with visual indicators
 
-Dynamic Pricing: Automatic discounts for last-minute bookings
+- ```Dynamic Pricing```: Automatic discounts for last-minute bookings
 
-Ticket Management: View all booked tickets
+- ```Ticket Management```: View all booked tickets
 
-Driver Features
-Driver Registration: Special registration with license validation
+### Driver Features
+- ```Driver Registration```: Special registration with license validation
 
-Bus Management: Register new buses with seat configurations
+- ```Bus Management```: Register new buses with seat configurations
 
-Trip Scheduling: Create new trips with time conflict checking
+- ```Trip Scheduling```: Create new trips with time conflict checking
 
-Seat Configuration: Automatic seat file generation for each trip
+- ```Seat Configuration```: Automatic seat file generation for each trip
 
 # Technical Features
 Multi-threaded: Handles multiple clients simultaneously
@@ -47,6 +49,8 @@ UDP Broadcast: Automatic server discovery
 Mutex Protection: Thread-safe file operations
 
 Interactive CLI: Rich terminal interface for clients
+
+---
 
 # System Architecture
 ```
@@ -60,6 +64,8 @@ Bus Reservation System
     ├── User Clients
     └── Driver Clients
 ```
+--- 
+
 # Data Files
 The system maintains several CSV files for data persistence:
 
@@ -75,6 +81,8 @@ The system maintains several CSV files for data persistence:
 
 ```seat{TRIP_ID}.txt``` - Per-trip seat availability files
 
+---
+
 # Installation & Setup
 ## Prerequisites
 Linux environment
@@ -86,12 +94,14 @@ Basic build tools (make)
 # Compilation
 
 ```
-g++ -std=c++11 -pthread server.cpp -o server
+g++ -pthread newserver.cpp -o server
 ```
 # Execution
 ```
 ./server
 ```
+---
+
 # Usage
 Starting the Server
 Compile the server code
@@ -108,6 +118,17 @@ Create necessary data files if they don't exist
 
 # Client Interaction
 Clients can connect to the server using the broadcasted port information. The server provides an interactive menu system for all operations.
+# Compilation
+
+```
+g++ -pthread cimine.cpp -o client
+```
+# Execution
+```
+./client
+```
+
+---
 
 # Code Structure
 ## Main Components
@@ -155,6 +176,8 @@ UDP broadcasting for server discovery
 
 Thread-per-client model
 
+---
+
 # Security Considerations
 Input Validation: All user inputs are strictly validated
 
@@ -166,6 +189,8 @@ Password Protection: Stored in plaintext (for educational purposes)
 
 Mutex Protection: All file operations are thread-safe
 
+---
+
 # Limitations
 Data Persistence: Uses simple CSV files (not suitable for production)
 
@@ -174,6 +199,8 @@ Security: Passwords stored in plaintext
 Scalability: Thread-per-client model may not scale to thousands of clients
 
 Error Handling: Basic error handling (could be more robust)
+
+---
 
 # Future Enhancements
 Database integration (SQLite/MySQL)
