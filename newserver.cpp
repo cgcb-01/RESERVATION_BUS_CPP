@@ -231,6 +231,8 @@ string receiveInput(int sock)
 
         // Trim whitespace
         size_t start = input.find_first_not_of(" \t\r\n");
+
+        /*
         if (start == string::npos) {
             blankInputCount++;
             if (blankInputCount >= 2) {
@@ -242,6 +244,12 @@ string receiveInput(int sock)
                 sendPrompt(sock, "⚠️  Empty input. Please enter again:\nPROMPT@> ");
                 continue;
             }
+        }
+        */
+
+        // If input was only spaces/newlines
+        if (start == string::npos) {
+            continue; // silently skip if you don't want to handle it anymore
         }
 
         size_t end = input.find_last_not_of(" \t\r\n");
@@ -257,6 +265,7 @@ string receiveInput(int sock)
         return input;
     }
 }
+
 
 
 // Ignoring Case 
@@ -377,10 +386,9 @@ time_t getTimeFromDateTime(const string &dateTimeStr)
     return mktime(&trip_tm); // full datetime in seconds since epoch
 }
 
-// SEAT MATRIX PRINTING
+//Printing the SEAT MATRIX 
 
-void seatMatrix(const string &tripId, int rows, int cols, int sock)
-{
+void seatMatrix(const string &tripId, int rows, int cols, int sock) {
     string seatFile = "seat" + tripId + ".txt";
     auto seatData = readFile(seatFile); // Load seat data
 
@@ -389,7 +397,7 @@ void seatMatrix(const string &tripId, int rows, int cols, int sock)
 
     // GATE and driver header
     stringstream ss;
-    ss << "\n|-------------------------------|";
+    ss << "\n|===============================|";
     ss << "\n| G               Driver Seat   |";
     ss << "\n| A                             |";
     ss << "\n| T                             |";
@@ -402,8 +410,7 @@ void seatMatrix(const string &tripId, int rows, int cols, int sock)
     int totalSeats = rows * cols;
     int seatIndex = 0;
 
-    for (int row = 0; row < rows; ++row)
-    {
+    for (int row = 0; row < rows; ++row) {
         stringstream iconLine;
         stringstream numberLine;
 
@@ -411,17 +418,13 @@ void seatMatrix(const string &tripId, int rows, int cols, int sock)
         numberLine << "|";
 
         // Left side
-        for (int i = 0; i < leftCols; ++i)
-        {
-            if (seatIndex < seatData.size() && seatData[seatIndex].size() >= 2)
-            {
+        for (int i = 0; i < leftCols; ++i) {
+            if (seatIndex < seatData.size() && seatData[seatIndex].size() >= 2) {
                 string status = seatData[seatIndex][1];
                 string seatIcon = (status == "0") ? "💺" : "❌";
                 iconLine << setw(2) << seatIcon << " ";
                 numberLine << setw(2) << setfill('0') << seatData[seatIndex][0] << " ";
-            }
-            else
-            {
+            } else {
                 iconLine << setw(3) << " ";
                 numberLine << setw(3) << " ";
             }
@@ -434,17 +437,13 @@ void seatMatrix(const string &tripId, int rows, int cols, int sock)
         numberLine << string(aisleSpacing, ' ');
 
         // Right side
-        for (int i = 0; i < rightCols; ++i)
-        {
-            if (seatIndex < seatData.size() && seatData[seatIndex].size() >= 2)
-            {
+        for (int i = 0; i < rightCols; ++i) {
+            if (seatIndex < seatData.size() && seatData[seatIndex].size() >= 2) {
                 string status = seatData[seatIndex][1];
                 string seatIcon = (status == "0") ? "💺" : "❌";
                 iconLine << setw(2) << seatIcon << " ";
                 numberLine << setw(2) << setfill('0') << seatData[seatIndex][0] << " ";
-            }
-            else
-            {
+            } else {
                 iconLine << setw(3) << " ";
                 numberLine << setw(3) << " ";
             }
@@ -457,9 +456,63 @@ void seatMatrix(const string &tripId, int rows, int cols, int sock)
         response << iconLine.str() << "\n";
         response << numberLine.str() << "\n";
     }
-
+    response << "\n|===============================|";
     response << "\n 💺 = Available, ❌ = Booked\n";
-    response << "\n IMPORTANT PRICE DETAILS\n1.LOWER PRICE FOR MIDDLE SEATS AND \n2.MORE LOWER PRICES FOR BACK SEATS.\n3.PRICE HIKE FOR WINDOW SEATS\n";
+
+    // Collect price details
+    string windowPrice = "N/A";
+    string middlePrice = "N/A";
+    string backWindowPrice = "N/A";
+    string backMiddlePrice = "N/A";
+
+    if (!seatData.empty()) {
+        // Window seat (first seat)
+        if (seatData[0].size() >= 3) {
+            windowPrice = seatData[0][2];
+        }
+
+        // Middle seat (if cols > 2)
+        if (cols > 2) {
+            if (seatData.size() > 1 && seatData[1].size() >= 3) {
+                middlePrice = seatData[1][2];
+            } else {
+                middlePrice = "N/A";
+            }
+        }
+
+        // Back window seat
+        int backRowIndex = (rows - 1) * cols;
+        if (backRowIndex < seatData.size() && seatData[backRowIndex].size() >= 3) {
+            backWindowPrice = seatData[backRowIndex][2];
+        }
+
+        // Back middle seat (if cols > 2)
+        if (cols > 2) {
+            int backMiddleIndex = backRowIndex + 1;
+            if (backMiddleIndex < seatData.size() && seatData[backMiddleIndex].size() >= 3) {
+                backMiddlePrice = seatData[backMiddleIndex][2];
+            } else {
+                backMiddlePrice = "N/A";
+            }
+        }
+    }
+
+    // Build the price details response
+    response << "\n IMPORTANT PRICE DETAILS\n";
+    if (cols > 2) {
+        response << "1. LOWER PRICE FOR MIDDLE SEATS: " << middlePrice << "\n";
+    } else {
+        response << "1. LOWER PRICE FOR MIDDLE SEATS: Not applicable (no middle seats in 2-column layout)\n";
+    }
+
+    response << "2. MORE LOWER PRICES FOR BACK SEATS -> BACK WINDOW: " << backWindowPrice;
+    if (cols > 2) {
+        response << ", BACK MIDDLE: " << backMiddlePrice;
+    }
+    response << "\n";
+
+    response << "3. PRICE HIKE FOR WINDOW SEATS: " << windowPrice << "\n";
+
     sendMessage(sock, response.str());
 }
 
