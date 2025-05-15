@@ -7,7 +7,6 @@ This repository contains the Bus Reservation System Management project developed
 
 - [Bus Reservation System Management in C++](#bus-reservation-system-management-in-c)
  - [Features](#Features)
- - [Screenshots](#screenshots)
  - [Getting Started](#getting-started)
     - [Prerequisites](#prerequisites)
     - [Installation](#installation)
@@ -22,9 +21,8 @@ This repository contains the Bus Reservation System Management project developed
     - [bus_trip_handler](#bus_trip_handler)
   - [Utility Functions](#utility-functions)
   - [How to Use](#how-to-use)
-  - [Team Members](#team-members)
 
-
+---
 
 ## Features
 
@@ -32,34 +30,8 @@ This repository contains the Bus Reservation System Management project developed
 - **Reservation System**: Book, view, and cancel reservations.
 - **File Handling**: Persist bus and reservation data using file handling techniques.
 - **User Interface**: Command-line based user interface for interacting with the system.
-
-## Screenshots
-
-- User login Screen
-
-![Screenshot 1](screenshots/1.png "User Screen")
-
-- Driver Login Screen
-
-![Screenshot 2](screenshots/2.png "Driver Screen")
-
-- Previous Bookings
-
-![Screenshot 3](screenshots/4.png "Previous bookings")
-
-- Book Ticket via bus matrix
-
-![Screenshot 4](screenshots/3.png "Book Ticket")
-
-- Upcoming trip details
-
-![Screenshot 5](screenshots/5.png "Upcoming trips")
-
-- Log out / Disconnect
-
-![Screenshot 6](screenshots/6.png "Log out ")
-
-
+  
+---
 
 ## Getting Started
 
@@ -145,18 +117,6 @@ The project directory typically contains the following files:
 
 1. **Add a Bus**: Select the option to add a bus and enter the required details.
 2. **View Buses**: Select the option to view all available buses.
-3. **Remove a Bus**: Select the option to remove a bus and provide the bus ID.
-4. **Book a Ticket**: Select the option to book a ticket and enter the required details.
-5. **View Reservations**: Select the option to view all reservations.
-6. **Cancel a Reservation**: Select the option to cancel a reservation and provide the reservation ID.
-
-## 👥 Team Members
-
-- **Tanushree Soni and Sutapa Naskar** – Lead Developer, Backend logic
-- **Nilesh Agrawal and Sai Charan** –  Reservation logic and Seat Matrix Design
-- **Vishnuvardhan Reddy and Akash** – Driver & Trip Management Module
-- **Koustav Das and Purna Siva** – File Handling and Data Validation
-- **Atul Singh and Aditya Kumar Patika** – PPT making and documentation 
-
-
+3. **Book a Ticket**: Select the option to book a ticket and enter the required details.
+4. **View Reservations**: Select the option to view all reservations.
 
