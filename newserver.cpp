@@ -20,6 +20,7 @@
 #include <sys/time.h>
 #include <netinet/tcp.h>
 #include <regex>
+#include <openssl/sha.h>
 
 #define BROADCAST_PORT 9000
 #define TCP_PORT 8050
@@ -53,6 +54,43 @@ vector<vector<string>> readFile(const string &filename)
     }
     return data;
 }
+
+
+void hash_password(const char *password, char *output)
+{
+    unsigned char hash[SHA256_DIGEST_LENGTH];
+    SHA256((const unsigned char *)password, strlen(password), hash);
+    for (int i = 0; i < SHA256_DIGEST_LENGTH; i++)
+        sprintf(output + (i * 2), "%02x", hash[i]);
+    output[SHA256_DIGEST_LENGTH * 2] = '\0';
+}
+string extractTime(const string &dateTime) {
+    // Example: "Thu May 15 06:45:00 2025" --> "06:45"
+    size_t timeStart = dateTime.find(':') - 2;
+    return dateTime.substr(timeStart, 5); // extracts "06:45"
+}
+string extractDateDDMMYYYY(const string &dateTime) {
+    // input: "Thu May 15 06:45:00 2025"
+    // output: "15/05/2025"
+    istringstream iss(dateTime);
+    string dayOfWeek, monthStr, dayStr, timeStr, yearStr;
+    iss >> dayOfWeek >> monthStr >> dayStr >> timeStr >> yearStr;
+
+    // Convert month name to number
+    map<string, string> monthMap = {
+        {"Jan", "01"}, {"Feb", "02"}, {"Mar", "03"}, {"Apr", "04"},
+        {"May", "05"}, {"Jun", "06"}, {"Jul", "07"}, {"Aug", "08"},
+        {"Sep", "09"}, {"Oct", "10"}, {"Nov", "11"}, {"Dec", "12"}
+    };
+
+    string month = monthMap[monthStr];
+
+    if (dayStr.length() == 1) dayStr = "0" + dayStr;
+
+    return dayStr + "/" + month + "/" + yearStr;
+}
+
+
 
 // Escape special characters in CSV
 string escapeCSV(const string &field)
@@ -396,14 +434,17 @@ void seatMatrix(const string &tripId, int rows, int cols, int sock) {
     response << "SEAT CHART FOR THE TRIP " << tripId << "\n";
 
     // GATE and driver header
-    stringstream ss;
-    ss << "\n|===============================|";
-    ss << "\n| G               Driver Seat   |";
-    ss << "\n| A                             |";
-    ss << "\n| T                             |";
-    ss << "\n| E                             |";
-    ss << "\n|-------------------------------|";
-    response << ss.str() << "\n\n";
+   stringstream ss;
+ss << "\n╔═══════════════════════════════╗";
+ss << "\n║         BUS SEAT STATUS       ║";
+ss << "\n╠═══════╦═══════════════════════╣";
+ss << "\n║ G     ║    DRIVER SEAT        ║";
+ss << "\n║       ╠═══════════════════════╣";
+ss << "\n║ A     ║ Seat Position: Optimal║";
+ss << "\n║ T     ║ Temperature:  22°C    ║";
+ss << "\n║ E     ║ Occupancy:    Detected║";
+ss << "\n╚═══════╩═══════════════════════╝";
+response << ss.str() << "\n\n";
 
     int leftCols = cols / 2;
     int rightCols = cols - leftCols;
@@ -691,8 +732,13 @@ void User::registerUser(int sock)
     sendPrompt(sock, "Enter a Strong Password:PROMPT@");
     string password = receiveInput(sock);
 
+     // Hash the password
+    char hash[SHA256_DIGEST_LENGTH * 2 + 1];
+    hash_password(password.c_str(), hash);
+
     mtx.lock();
-    writeFile(USER_FILE, {aadhar, name, to_string(age), password});
+    // writeFile(USER_FILE, {aadhar, name, to_string(age), password});
+    writeFile(USER_FILE, {aadhar, name, to_string(age), string(hash)});
     mtx.unlock();
     sendMessage(sock, "✅ Registration Successful!\n");
 } // d
@@ -705,12 +751,17 @@ string User::login(int sock)
     sendPrompt(sock, "Enter Your Password:PROMPT@");
     string password = receiveInput(sock);
 
+    // Hash the entered password
+    char hashedPassword[SHA256_DIGEST_LENGTH * 2 + 1];
+    hash_password(password.c_str(), hashedPassword);
+
     auto users = readFile(USER_FILE);
     for (auto &row : users)
     {
         if (row.size() < 4)
             continue;
-        if (row[0] == aadhar && row[3] == password)
+        // if (row[0] == aadhar && row[3] == password)
+        if (row[0] == aadhar && row[3] == hashedPassword)
         {
             sendMessage(sock, "✅ Login Successful!\n");
             return aadhar;
@@ -817,8 +868,13 @@ void Driver::registerDriver(int sock)
     sendPrompt(sock, "Enter a Strong Password:PROMPT@");
     string password = receiveInput(sock);
 
+    // Hash the password
+    char hash[SHA256_DIGEST_LENGTH * 2 + 1];
+    hash_password(password.c_str(), hash);
+
     mtx.lock();
-    writeFile(DRIVER_FILE, {aadhar, license, name, to_string(age), password});
+    writeFile(DRIVER_FILE, {aadhar, license, name, to_string(age), string(hash)});
+    // writeFile(DRIVER_FILE, {aadhar, license, name, to_string(age), password});
     mtx.unlock();
     sendMessage(sock, "✅ Registration Successful!\n");
 } // d
@@ -840,6 +896,10 @@ string Driver::loginDriver(int sock)
     sendPrompt(sock, "Enter Your Password:PROMPT@");
     string password = trim(receiveInput(sock));
 
+    // Hash the entered password
+    char hashedPassword[SHA256_DIGEST_LENGTH * 2 + 1];
+    hash_password(password.c_str(), hashedPassword);
+
     auto users = readFile(DRIVER_FILE);
 
     for (auto &row : users)
@@ -850,7 +910,8 @@ string Driver::loginDriver(int sock)
         string storedAadhar = trim(row[0]);
         string storedPassword = trim(row[4]);
 
-        if (storedAadhar == aadhar && storedPassword == password)
+        if (storedAadhar == aadhar && storedPassword == hashedPassword)
+        // if (storedAadhar == aadhar && storedPassword == password)
         {
             sendMessage(sock, "✅ Login Successful!\n");
             return storedAadhar;
@@ -993,6 +1054,27 @@ void bus_trip_handler::insertTrip(int sock)
     {
         sendMessage(sock, "❌ Bus not found or invalid seat dimensions.\n");
         return;
+    }
+
+    auto trips = readFile("trips.txt");
+    for (auto &trip : trips)
+    {
+        if (trip.size() == 7 && trip[1] == busNo)
+        {
+            string existingDateTime = trip[6];
+        string existingDate = extractDateDDMMYYYY(existingDateTime);
+
+        if (existingDate == departDate)
+        {
+            string existingTime = extractTime(existingDateTime);  // "HH:MM"
+            
+            if (!isTimeDifferenceSafe(existingTime, startTime))
+            {
+                sendPrompt(sock, "❌ A trip with this bus is already scheduled on the same date within 60 minutes.\n");
+                return;
+            }
+        }
+        }
     }
 
     string tripID = generateTripID();
@@ -1185,8 +1267,8 @@ vector<vector<string>> ReservationHandler::viewTrips(int sock)
 
             if (timeDiffMinutes <= 60 && timeDiffMinutes > 0)
             {
-                // trip.push_back("⚠️ Less than 1 hour left! Price Decreased - Book Now!");
-                trip[6] += " ⚠️ Less than 1 hour left! Price Decreased - Hurry!";
+                
+                trip[6] += " [ DISCOUNT-⚠️ Less than 1 hour left! Price Decreased - Hurry!]";
             }
 
             upcomingTrips.push_back(trip);
@@ -1238,12 +1320,11 @@ void ReservationHandler::reserve(int sock) {
             auto& t = available[i];
             string priceNote = "";
             bool discount = false;
-            if (t.size() ==9) {
-                priceNote = " ["+t[9]+"]";
-                discount = true;
-            }
+            if (t.size() == 7 && t[6].find("DISCOUNT") != string::npos) 
+            discount = true;
+            
             tripOptions += to_string(i+1) + ". " + t[0] + " | " + t[1] + " | " + t[2] 
-                        + " → " + t[3] + " | " + t[6]+ priceNote + "\n";
+                        + " → " + t[3] + " | " + t[6] +"\n";
             tripIds.push_back(t[0]);
             hasDiscount[t[0]] = discount;
         }
@@ -1412,6 +1493,7 @@ void ReservationHandler::reserve(int sock) {
 }
 
 
+
  
 //DRIVER CLIENT--------------
 void driver_client(int sock)
@@ -1455,9 +1537,18 @@ void driver_client(int sock)
 //----------USER CLIENT----------------
 void handle_client(int sock)
 {
-    sendMessage(sock, "🚍 Welcome to the Bus Reservation System 🚍\n");
-    sendPrompt(sock, "\n--------------Mention Your Requirements:---------------\n1(& default).USER\n2.DRIVER\n Enter Your Choice:PROMPT@");
-    string c = receiveInput(sock);
+stringstream ss;
+ss << "\n╔══════════════════════════════════════════════════════════╗";
+ss << "\n║                  BUS RESERVATION SYSTEM                  ║";
+ss << "\n╠══════════════════════════════════════════════════════════╣";
+ss << "\n║                    ARE YOU HERE AS A ?                   ║";
+ss << "\n║                                                          ║";
+ss << "\n║              1. PASSENGER   2. BUS DRIVERS               ║";
+ss << "\n╚══════════════════════════════════════════════════════════╝";
+ss << "\n  ENTER YOUR CHOICE :  PROMPT@";
+
+    sendPrompt(sock,ss.str());
+    string c = receiveInput(sock); 
     if (c == "2")
         driver_client(sock);
     User user;
