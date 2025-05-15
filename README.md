@@ -1,217 +1,162 @@
-# BUS RESERVATION SYSTEM
-# Overview
-This is a comprehensive Bus Reservation System server implemented in C++ that handles both user and driver functionalities through TCP socket communication. The system supports:
+# Bus Reservation System Management in C++
 
-User registration and authentication
 
-Driver registration and authentication
+This repository contains the Bus Reservation System Management project developed using OS concepts in C++.
 
-Bus registration by drivers
+## Table of Contents
 
-Trip scheduling by drivers
+- [Bus Reservation System Management in C++](#bus-reservation-system-management-in-c)
+ - [Features](#Features)
+ - [Screenshots](#screenshots)
+ - [Getting Started](#getting-started)
+    - [Prerequisites](#prerequisites)
+    - [Installation](#installation)
+    - [Compilation](#compilation)
+    - [Running the Application](#running-the-application)
+    - [Admin Credentials](#admin-credentials)
+  - [File Structure](#file-structure)
+  - [Classes and Methods](#classes-and-methods)
+    - [User](#user)
+    - [Driver](#driver)
+    - [Reservation_Handler](#reservation-handler)
+    - [bus_trip_handler](#bus_trip_handler)
+  - [Utility Functions](#utility-functions)
+  - [How to Use](#how-to-use)
+  - [Team Members](#team-members)
 
-Seat reservation with dynamic pricing
 
-Real-time seat availability visualization
 
-UDP broadcasting for server discovery
+## Features
 
----
+- **Bus Management**: Insert(for drivers), view, and register trips.
+- **Reservation System**: Book, view, and cancel reservations.
+- **File Handling**: Persist bus and reservation data using file handling techniques.
+- **User Interface**: Command-line based user interface for interacting with the system.
 
-# Features
-### User Features
-- ```Registration & Login```: Secure user registration with Aadhar validation
+## Screenshots
 
-- ```Trip Viewing```: View all upcoming trips with real-time availability
+- User login Screen
 
-- ```Seat Reservation```: Interactive seat map with visual indicators
+![Screenshot 1](screenshots/1.png "User Screen")
 
-- ```Dynamic Pricing```: Automatic discounts for last-minute bookings
+- Driver Login Screen
 
-- ```Ticket Management```: View all booked tickets
+![Screenshot 2](screenshots/2.png "Driver Screen")
 
-### Driver Features
-- ```Driver Registration```: Special registration with license validation
+- Previous Bookings
 
-- ```Bus Management```: Register new buses with seat configurations
+![Screenshot 3](screenshots/4.png "Previous bookings")
 
-- ```Trip Scheduling```: Create new trips with time conflict checking
+- Book Ticket via bus matrix
 
-- ```Seat Configuration```: Automatic seat file generation for each trip
+![Screenshot 4](screenshots/3.png "Book Ticket")
 
-# Technical Features
-Multi-threaded: Handles multiple clients simultaneously
+- Upcoming trip details
 
-File-based Database: CSV files for data persistence
+![Screenshot 5](screenshots/5.png "Upcoming trips")
 
-UDP Broadcast: Automatic server discovery
+- Log out / Disconnect
 
-Mutex Protection: Thread-safe file operations
+![Screenshot 6](screenshots/6.png "Log out ")
 
-Interactive CLI: Rich terminal interface for clients
 
----
 
-# System Architecture
-```
-Bus Reservation System
-├── Server (this)
-│   ├── TCP Listener (Port 8050)
-│   ├── UDP Broadcaster (Port 9000)
-│   ├── Data Storage (CSV files)
-│   └── Multi-threaded Client Handler
-└── Clients
-    ├── User Clients
-    └── Driver Clients
-```
---- 
+## Getting Started
 
-# Data Files
-The system maintains several CSV files for data persistence:
+To get started with the development or usage of this project, follow the instructions below:
 
-```users.txt``` - Stores user information (Aadhar, name, age, password)
+### Prerequisites
 
-```drivers.txt``` - Stores driver information (Aadhar, license, name, age, password)
+- A C++ compiler (such as g++, clang++)
+- A suitable development environment (such as Visual Studio, Code::Blocks, or a text editor with command line tools)
 
-```buses.txt```- Stores bus information (Bus number, driver Aadhar, rows, cols)
+### Installation
 
-```trips.txt``` - Stores trip information (Trip ID, bus number, source, destination, time, driver)
+1. Clone this repository to your local machine:
 
-```bookings.txt``` - Stores booking information (Trip ID, bus number, seat, user Aadhar, name, price)
+    ```bash
+    git clone https://github.com/T-Soni/OS_BusReservationSystem.git
+    ```
 
-```seat{TRIP_ID}.txt``` - Per-trip seat availability files
+2. Navigate into the cloned repository directory:
 
----
+    ```bash
+    cd bus-reservation-system-cpp
+    ```
 
-# Installation & Setup
-## Prerequisites
-Linux environment
+### Compilation
 
-GCC/G++ compiler
+To compile the project, you can use the following command in the terminal:
 
-Basic build tools (make)
 
-# Compilation
 
-```
-g++ -pthread newserver.cpp -o server
-```
-# Execution
-```
-./server
-```
----
 
-# Usage
-Starting the Server
-Compile the server code
 
-Run the executable
+### Running the Application
 
-The server will:
+After successfully compiling the project, you can run the application using the command:
 
-Start broadcasting its availability on port 9000
 
-Listen for TCP connections on port 8050
 
-Create necessary data files if they don't exist
+## File Structure
+
+The project directory typically contains the following files:
+
+- `cmine.cpp`: The main entry point of the application.
+- `newserver.cpp`: The server client implementation code.
+- `users.txt`: The details of the users stored here after successful registration.
+- `drivers.txt`: A file containing all the details regarding successfully registered drivers.
+- `buses.txt`: Information regarding buses present. 
+- `trips.txt`: The trips present in our project.
+- `bookings.txt`: A file contains all the confirmed bookings.
+- `seatT00X.txt`: The seat matrix of the trips existing in our project.
+- `screenshots/`: The folder containing all the screenshots of the project.
+
+### Classes and Methods 
+
+- **User**
+  - `registerUser(sock)`: Registers a new user using Aadhar and name.
+  - `login(sock)`: Logs in a user by validating credentials.
+
+- **Driver**
+  - `registerDriver(sock)`:  Registers a driver with license ID and name.
+  - `loginDriver(sock)`: Authenticates a driver based on ID and name.
+
+- **Reservation_Handler**
+  - `viewTickets(sock)`:  Displays tickets booked by the user.
+  - `viewTrips(sock)`: Lists upcoming trips (excludes expired ones).
+  - `reserve(sock)`: Full flow to select a trip and book a seat.
+
+- **bus_trip_handler**
+  - `registerBus(sock)`:Adds a new bus with seat layout.
+  - `insertTrip(sock)`: Assigns a trip with time, date, source, and destination.
+  - `createSeatFile(tripId, rows, cols)`: Generates seat layout file for the trip.
+
+### Utility Functions
+
+- File I/O: `readFile()`, `updateFile()`, `writeFile()`, `escapeCSV()`
+- Security: `hash_password()`
+- Time: `timeToMinutes()`, `isTimeDifferenceSafe()`, `isDateTimeAfterNow()`, `getTimeFromDateTime()`
+- Seat Booking: `bookSeat()`, `seatMatrix()`
+- Communication: `sendPrompt()`, `receiveInput()`
+- Validation: `isValidAadhar()`, `isAadharExist()`, `isValidLicense()`, `isLicenseExist()`
+
+## How to Use
+
+1. **Add a Bus**: Select the option to add a bus and enter the required details.
+2. **View Buses**: Select the option to view all available buses.
+3. **Remove a Bus**: Select the option to remove a bus and provide the bus ID.
+4. **Book a Ticket**: Select the option to book a ticket and enter the required details.
+5. **View Reservations**: Select the option to view all reservations.
+6. **Cancel a Reservation**: Select the option to cancel a reservation and provide the reservation ID.
+
+## 👥 Team Members
+
+- **Tanushree Soni and Sutapa Naskar** – Lead Developer, Backend logic
+- **Nilesh Agrawal and Sai Charan** –  Reservation logic and Seat Matrix Design
+- **Vishnuvardhan Reddy and Akash** – Driver & Trip Management Module
+- **Koustav Das and Purna Siva** – File Handling and Data Validation
+- **Atul Singh and Aditya Kumar Patika** – PPT making and documentation 
 
-# Client Interaction
-Clients can connect to the server using the broadcasted port information. The server provides an interactive menu system for all operations.
-# Compilation
 
-```
-g++ -pthread cimine.cpp -o client
-```
-# Execution
-```
-./client
-```
-
----
-
-# Code Structure
-## Main Components
-### File Operations
-
-readFile() - Reads CSV files into 2D string vectors
-
-writeFile() - Appends data to CSV files
-
-updateFile() - Overwrites entire CSV files
-
-### User Management
-
-Registration with Aadhar validation
-
-Login authentication
-
-### Driver Management
-
-Registration with license validation
-
-Login authentication
-
-### Bus & Trip Management
-
-Bus registration with seat configuration
-
-Trip scheduling with time conflict checking
-
-Automatic seat file generation
-
-### Reservation System
-
-Interactive seat maps
-
-Seat locking mechanism
-
-Dynamic pricing based on booking time
-
-### Network Communication
-
-TCP server for client connections
-
-UDP broadcasting for server discovery
-
-Thread-per-client model
-
----
-
-# Security Considerations
-Input Validation: All user inputs are strictly validated
-
-Aadhar Verification: 12-digit numeric validation
-
-License Verification: 16-character validation
-
-Password Protection: Stored in plaintext (for educational purposes)
-
-Mutex Protection: All file operations are thread-safe
-
----
-
-# Limitations
-Data Persistence: Uses simple CSV files (not suitable for production)
-
-Security: Passwords stored in plaintext
-
-Scalability: Thread-per-client model may not scale to thousands of clients
-
-Error Handling: Basic error handling (could be more robust)
-
----
-
-# Future Enhancements
-Database integration (SQLite/MySQL)
-
-Password encryption
-
-JSON protocol for client-server communication
-
-Admin interface
-
-Trip cancellation functionality
-
-Enhanced reporting
 
