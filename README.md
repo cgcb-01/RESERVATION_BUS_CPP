@@ -52,7 +52,7 @@ To get started with the development or usage of this project, follow the instruc
 1. Clone this repository to your local machine:
 
     ```bash
-    git clone https://github.com/cgcb-01/RESERVATION_BUS_CPP
+    git clone https://github.com/cgcb-01/RESERVATION_BUS_CPP.git
     ```
 
 2. Navigate into the cloned repository directory:
