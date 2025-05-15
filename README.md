@@ -11,22 +11,25 @@
 
 ## 📑 Table of Contents
 
-- [Bus Reservation System Management in C++](#bus-reservation-system-management-in-c)
- - [Features](#✨ Features)
- - [Getting Started](#🚀 Getting Started)
-    - [Prerequisites](#🧰 Prerequisites)
-    - [Installation](#installation)
-    - [Compilation](#compilation)
-    - [Running the Application](#running-the-application)
-    - [Admin Credentials](#admin-credentials)
-  - [File Structure](#file-structure)
-  - [Classes and Methods](#classes-and-methods)
-    - [User](#user)
-    - [Driver](#driver)
-    - [Reservation_Handler](#reservation-handler)
-    - [bus_trip_handler](#bus_trip_handler)
-  - [Utility Functions](#utility-functions)
-  - [How to Use](#how-to-use)
+## 📑 Table of Contents
+
+- [Bus Reservation System Management in C++](#-bus-reservation-system-management-in-c)
+- [✨ Features](#-features)
+- [🚀 Getting Started](#-getting-started)
+  - [🧰 Prerequisites](#-prerequisites)
+  - [📥 Installation](#-installation)
+  - [⚙️ Compilation](#-compilation)
+  - [▶️ Running the Application](#-running-the-application)
+  - [🔐 Admin Credentials](#-admin-credentials)
+- [📁 File Structure](#-file-structure)
+- [🏷️ Classes and Methods](#-classes-and-methods)
+  - [👤 User](#-user)
+  - [🧑‍✈️ Driver](#-driver)
+  - [🎫 Reservation_Handler](#-reservation_handler)
+  - [🚌 bus_trip_handler](#-bus_trip_handler)
+- [🧩 Utility Functions](#-utility-functions)
+- [🧪 How to Use](#-how-to-use)
+- [📜 LICENSE](#license)
 
 ---
 
