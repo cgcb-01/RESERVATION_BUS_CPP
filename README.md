@@ -11,8 +11,6 @@
 
 ## 📑 Table of Contents
 
-## 📑 Table of Contents
-
 - [Bus Reservation System Management in C++](#-bus-reservation-system-management-in-c)
 - [✨ Features](#-features)
 - [🚀 Getting Started](#-getting-started)
@@ -20,7 +18,6 @@
   - [📥 Installation](#-installation)
   - [⚙️ Compilation](#-compilation)
   - [▶️ Running the Application](#-running-the-application)
-  - [🔐 Admin Credentials](#-admin-credentials)
 - [📁 File Structure](#-file-structure)
 - [🏷️ Classes and Methods](#-classes-and-methods)
   - [👤 User](#-user)
@@ -141,7 +138,7 @@ The project directory typically contains the following files:
 - Communication: `sendPrompt()`, `receiveInput()`
 - Validation: `isValidAadhar()`, `isAadharExist()`, `isValidLicense()`, `isLicenseExist()`
 
-## How to Use
+## 🧪 How to Use
 
 1. **Add a Bus**: Select the option to add a bus and enter the required details.
 2. **View Buses**: Select the option to view all available buses.
@@ -152,5 +149,5 @@ Enjoy building and extending this terminal-based system! Feel free to contribute
 
 ---
 
-## LICENSE
+## 📜 LICENSE
 This project is Licensed under MIT LICENSE.
