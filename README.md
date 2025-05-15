@@ -12,9 +12,9 @@
 ## 📑 Table of Contents
 
 - [Bus Reservation System Management in C++](#bus-reservation-system-management-in-c)
- - [Features](#Features)
- - [Getting Started](#getting-started)
-    - [Prerequisites](#prerequisites)
+ - [Features](#✨ Features)
+ - [Getting Started](#🚀 Getting Started)
+    - [Prerequisites](#🧰 Prerequisites)
     - [Installation](#installation)
     - [Compilation](#compilation)
     - [Running the Application](#running-the-application)
